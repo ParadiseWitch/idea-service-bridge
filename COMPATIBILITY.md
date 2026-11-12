@@ -1,6 +1,6 @@
 # IDEA 兼容范围
 
-当前插件 0.4.0 的声明为 `since-build="242" until-build="242.*"`，使用 Java 21 字节码。实际验证环境是 **IntelliJ IDEA Ultimate 2024.2.6，IU-242.26775.15**。
+当前插件 0.5.0 的声明为 `since-build="242" until-build="242.*"`，使用 Java 21 字节码。实际验证环境是 **IntelliJ IDEA Ultimate 2024.2.6，IU-242.26775.15**。
 
 | IDEA | 平台分支 | 平台 Java | 当前状态 |
 |---|---|---|---|

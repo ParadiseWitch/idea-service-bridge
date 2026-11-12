@@ -13,6 +13,8 @@
 
 ## 版本边界
 
+- 插件 0.5.0 起在 IDEA 启动和插件热加载时自动开启 HTTP 接口。手动停止接口在本次插件会话内生效，下次 IDEA 启动或插件重新加载时再次自动开启。自动开启失败只记录 idea.log，Tools 菜单可手动恢复。
+
 - 插件 0.2.0 支持免 Token、HTTP 帮助和已有实例更新/重启。
 - 插件 0.4.0 移除白名单；启动接口时自动移除旧 settings.json 中的 allowedConfigurations 字段并保留端口。
 - 插件 0.3.0 新增启动未运行配置；默认 Debug，已有实例时拒绝重复启动。
@@ -55,7 +57,7 @@ smoke 仅做 MCP 工具发现、状态和帮助读取，不启动、更新或重
 
 ## 插件安装及“需要 Restart IDE”
 
-在用户要求安装或升级时，从 IDEA **Settings → Plugins → Install Plugin from Disk** 选择安装包，然后 **Tools → Agent Service Bridge → 启动 / 查看连接信息**。只升级插件时等待接口任务空闲，先停 Agent 接口，再安装并重新开启接口。
+在用户要求安装或升级时，从 IDEA **Settings → Plugins → Install Plugin from Disk** 选择安装包；0.5.0+ 会自动开启接口，可通过 **Tools → Agent Service Bridge → 启动 / 查看连接信息** 查看实际地址或在失败后手动重试。只升级插件时等待接口任务空闲，先停 Agent 接口再安装；0.5.0+ 热加载成功后自动开启，旧版本需手动开启。
 
 动态兼容的插件也可能因 IDEA 全局状态无法热更新。已确认的 2024.2 情况：其他插件存在待重启更新时，全局 InstalledPluginsState.isRestartRequired() 会使动态安装检查返回：
 

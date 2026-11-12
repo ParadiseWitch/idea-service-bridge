@@ -12,10 +12,12 @@
 
 ## 安装
 
-1. 从 [Releases](https://github.com/ParadiseWitch/idea-service-bridge/releases/latest) 下载 `idea-agent-bridge-0.4.0.zip`。
+1. 从 [Releases](https://github.com/ParadiseWitch/idea-service-bridge/releases/latest) 下载 `idea-agent-bridge-0.5.0.zip`。
 2. IDEA → Settings → Plugins → 齿轮 → **Install Plugin from Disk**，选择 ZIP。
-3. Tools → Agent Service Bridge → **启动 / 查看连接信息**。
+3. 安装完成或下次启动 IDEA 时，控制接口会**自动开启**，无需手动点击。
 4. 浏览器打开 **http://127.0.0.1:17891/help**，可查看接口和直接调试。
+
+可通过 Tools → Agent Service Bridge 查看连接信息、手动停止或重新开启。手动停止仅对本次插件会话生效，下次启动 IDEA 时仍自动开启；端口冲突等失败原因记录在 IDEA 日志。
 
 接口仅监听本机，无需 Token。**默认允许所有运行配置，无需设置服务名白名单。** 开启接口不会自动操作业务服务。
 

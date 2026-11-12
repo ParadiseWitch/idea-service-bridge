@@ -78,6 +78,7 @@ public final class SandboxStarter implements ApplicationStarter {
     private int exerciseService(IdeaPluginDescriptorImpl descriptor,List<String> report) throws Exception {
         var serviceClass=descriptor.getPluginClassLoader().loadClass("dev.agentbridge.idea.BridgeService");
         Object service=edt(()->serviceClass.getMethod("getInstance").invoke(null));
+        check(edt(()->(boolean)serviceClass.getMethod("isRunning").invoke(service)),"Interface starts automatically after dynamic plugin load without invoking start action");
         Path connection=edt(()->(Path)serviceClass.getMethod("start").invoke(service));
         var json=JsonParser.parseString(Files.readString(connection)).getAsJsonObject();
         String base=json.get("baseUrl").getAsString();
@@ -102,8 +103,51 @@ public final class SandboxStarter implements ApplicationStarter {
         // Test stopping and restarting the bridge without stopping or restarting IDEA.
         edt(()-> { serviceClass.getMethod("stopIfIdle").invoke(service); return null; });
         check(!Files.exists(connection),"Stop removed connection discovery file");
+        edt(()-> {
+            var bus=ApplicationManager.getApplication().getMessageBus();
+            bus.syncPublisher(com.intellij.ide.AppLifecycleListener.TOPIC).appFrameCreated(List.of());
+            bus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(descriptor);
+            return null;
+        });
+        check(!edt(()->(boolean)serviceClass.getMethod("isRunning").invoke(service)),"Repeated lifecycle events preserve manual interface stop");
+        verifyApplicationStartup(serviceClass,connection,report);
         edt(()->serviceClass.getMethod("start").invoke(service));
+        report.add("Automatic plugin-load start, duplicate lifecycle events, manual stop and manual retry verified");
         return URI.create(base).getPort();
+    }
+    @SuppressWarnings({"rawtypes","unchecked"})
+    private void verifyApplicationStartup(Class serviceClass,Path connection,List<String> report) throws Exception {
+        int port=JsonParser.parseString(Files.readString(connection.resolveSibling("settings.json")))
+            .getAsJsonObject().get("port").getAsInt();
+        for(boolean conflict:List.of(false,true)) {
+            var lifetime=com.intellij.openapi.util.Disposer.newDisposable("Application startup event test");
+            Object fresh=edt(()->serviceClass.getConstructor().newInstance());
+            com.intellij.openapi.util.Disposer.register(lifetime,(com.intellij.openapi.Disposable)fresh);
+            edt(()-> {
+                com.intellij.testFramework.ServiceContainerUtil.replaceService(ApplicationManager.getApplication(),serviceClass,fresh,lifetime);
+                return null;
+            });
+            try {
+                try(var occupied=new java.net.ServerSocket()) {
+                    occupied.setReuseAddress(true);
+                    if(conflict) occupied.bind(new InetSocketAddress("127.0.0.1",port));
+                    edt(()-> {
+                        ApplicationManager.getApplication().getMessageBus().syncPublisher(com.intellij.ide.AppLifecycleListener.TOPIC)
+                            .appFrameCreated(List.of());
+                        return null;
+                    });
+                    check(edt(()->(boolean)serviceClass.getMethod("isRunning").invoke(fresh))!=conflict,
+                        "Startup event starts the interface; port conflict stays nonfatal");
+                    if(conflict) check(!Files.exists(connection),"Failed automatic start leaves no connection file");
+                }
+                if(conflict) edt(()->serviceClass.getMethod("start").invoke(fresh));
+                var client=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
+                check(client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/v1/status"))
+                    .timeout(Duration.ofSeconds(5)).build(),HttpResponse.BodyHandlers.ofString()).statusCode()==200,
+                    "Automatically started or manually recovered interface answers HTTP");
+            } finally { edt(()-> { com.intellij.openapi.util.Disposer.dispose(lifetime); return null; }); }
+        }
+        report.add("Application startup event: fresh service starts HTTP without a project; occupied port is nonfatal and manual retry recovers");
     }
     private static void check(boolean value,String message) { if(!value) throw new AssertionError(message); }
     private static <T> T edt(CheckedSupplier<T> action) throws Exception {

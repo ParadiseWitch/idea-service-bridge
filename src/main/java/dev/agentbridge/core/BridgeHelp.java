@@ -6,7 +6,7 @@ import java.util.*;
 
 /** Shared interface documentation for the browser, IDE dialog and agents. */
 public final class BridgeHelp {
-    public static final String VERSION="0.4.0";
+    public static final String VERSION="0.5.0";
     private BridgeHelp() { }
     public static Map<String,Object> api(String base) {
         return Map.of("name","Agent Service Bridge","version",VERSION,"baseUrl",base,

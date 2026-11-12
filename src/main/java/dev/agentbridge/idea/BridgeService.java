@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.diagnostic.Logger;
 import dev.agentbridge.core.BridgeServer;
 import dev.agentbridge.core.BridgeHelp;
 
@@ -18,6 +19,7 @@ public final class BridgeService implements Disposable {
     private static final Gson JSON=new GsonBuilder().setPrettyPrinting().create();
     private final Path directory=Path.of(PathManager.getConfigPath(),"agent-service-bridge");
     private BridgeServer server;
+    private boolean autoStartAttempted;
 
     public BridgeService() {
         ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC,new DynamicPluginListener() {
@@ -32,6 +34,15 @@ public final class BridgeService implements Disposable {
         });
     }
     public static BridgeService getInstance() { return ApplicationManager.getApplication().getService(BridgeService.class); }
+    public synchronized void autoStartOnce() {
+        if(autoStartAttempted) return;
+        autoStartAttempted=true;
+        try { start(); }
+        catch(Exception error) {
+            Logger.getInstance(BridgeService.class).warn(
+                "Agent Service Bridge could not start automatically. Use Tools > Agent Service Bridge to retry.",error);
+        }
+    }
     public synchronized Path start() throws IOException {
         if(server!=null) { server.resume(); return directory.resolve("connection.json"); }
         Files.createDirectories(directory); restrictToOwner(directory);
