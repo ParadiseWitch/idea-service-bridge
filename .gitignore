@@ -1,0 +1,13 @@
+/build/
+/.sandbox/
+/.idea/
+*.iml
+/.sdk/
+/.playwright-cli/
+/.npm-cache/
+/mcp-adapter/node_modules/
+/skill-package/
+/docs/superpowers/
+/.release/
+.DS_Store
+Thumbs.db

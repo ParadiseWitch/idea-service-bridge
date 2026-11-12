@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "idea-service-bridge": {
+      "command": "node",
+      "args": ["C:/tools/idea-service-bridge/mcp-adapter/src/index.mjs"],
+      "env": { "IDEA_BRIDGE_URL": "http://127.0.0.1:17891" }
+    }
+  }
+}

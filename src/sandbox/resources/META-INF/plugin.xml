@@ -1,0 +1,12 @@
+<idea-plugin>
+  <id>dev.agentbridge.sandbox</id>
+  <name>Agent Bridge Isolated Test Harness</name>
+  <version>1.0</version>
+  <vendor>Local Development</vendor>
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.java</depends>
+  <depends>com.intellij.javaee.app.servers.integration</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <appStarter implementation="dev.agentbridge.sandbox.SandboxStarter"/>
+  </extensions>
+</idea-plugin>

@@ -1,0 +1,21 @@
+<idea-plugin require-restart="false">
+  <id>dev.agentbridge.idea</id>
+  <name>Agent Service Bridge</name>
+  <vendor url="https://github.com/ParadiseWitch/idea-service-bridge">ParadiseWitch</vendor>
+  <version>0.3.0</version>
+  <description><![CDATA[通过本机 HTTP 接口查询、更新和重启指定的 IDEA 运行配置。无需 Token，提供浏览器调试页和 agent 使用说明接口，支持动态安装与卸载。]]></description>
+  <idea-version since-build="242" until-build="242.*"/>
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.java</depends>
+  <depends>com.intellij.javaee.app.servers.integration</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="dev.agentbridge.idea.BridgeService"/>
+  </extensions>
+  <actions>
+    <group id="AgentBridge.Menu" text="Agent Service Bridge" popup="true">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+      <action id="AgentBridge.Start" class="dev.agentbridge.idea.StartBridgeAction" text="启动 / 查看连接信息"/>
+      <action id="AgentBridge.Stop" class="dev.agentbridge.idea.StopBridgeAction" text="停止 Agent 接口"/>
+    </group>
+  </actions>
+</idea-plugin>

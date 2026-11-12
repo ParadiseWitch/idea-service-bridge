@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><title>Agent Service Bridge</title>
+<style>
+body{font:16px/1.6 system-ui,sans-serif;max-width:1000px;margin:32px auto;padding:0 20px;color:#243044;background:#f6f8fc}section{background:white;padding:24px;border:1px solid #dce2ec;border-radius:12px;margin:20px 0}h1,h2{line-height:1.25}a{color:#245bc4}nav{display:flex;gap:20px;flex-wrap:wrap}button,select,input,textarea{font:inherit;padding:8px;border:1px solid #b4c0d3;border-radius:6px}button{cursor:pointer;background:#edf3ff}button:disabled{opacity:.5;cursor:wait}textarea{box-sizing:border-box;width:100%;height:190px;font:14px/1.5 monospace}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eff3f9;padding:16px;border-radius:6px;max-height:600px;overflow:auto}label{display:block;margin:12px 0}code{overflow-wrap:anywhere}.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.hint{color:#5b687d}
+</style></head><body>
+<h1>Agent Service Bridge</h1><p>直接在浏览器查询、调试 IDEA 接口，无需 Token。</p>
+<nav><a href="/v1/status" target="_blank">运行状态 JSON</a><a href="/v1/help" target="_blank">接口说明 JSON</a><a href="/v1/skill" target="_blank">Agent Skill</a><a href="/skill.md" target="_blank">skill.md</a></nav>
+<section><h2>告诉 agent 如何使用</h2><p id="agentInstruction"></p><button id="copyInstruction">复制给 agent 的说明</button></section>
+<section><h2>查询状态</h2><p>GET <code>/v1/status</code> 返回项目、配置和最新运行实例 ID。</p><button id="status">查询状态 / 刷新实例</button><pre id="statusOutput">点击查询状态。</pre></section>
+<section><h2>提交更新或重启任务</h2><p class="hint">先查询状态并选择目标，再检查 JSON。只有点击“提交任务”才会执行修改操作。</p>
+<label>运行实例 <select id="instances"><option value="">先查询状态</option></select></label>
+<label>操作 <select id="operation"><option value="update-resources">更新静态资源</option><option value="start">启动未运行配置（Debug）</option><option value="update-classes-and-resources">更新 class 和资源（Debug）</option><option value="restart">重启目标实例</option></select></label>
+<textarea id="body" spellcheck="false">{"project":"C:/code/dev","configuration":"portal","executionId":123,"operation":"update-resources","caller":"browser-debug"}</textarea>
+<button id="submit">提交任务：POST /v1/tasks</button>
+<label>任务 ID <input id="taskId" size="40" placeholder="提交任务后自动填写"></label><button id="queryTask">查询任务结果</button><pre id="taskOutput">尚未提交任务。</pre>
+<p class="hint">202 表示已接收，继续查询直到 SUCCEEDED / FAILED。同项目任务冲突返回 409；编译或热替换失败不会自动重启。构建完成后请访问业务页面确认生效。</p></section>
+<script>
+const $=id=>document.getElementById(id); let choices=[];
+const instruction=`先读取 ${location.origin}/v1/skill，按说明查询 IDEA 运行状态，再对指定运行实例执行需要的操作。`;
+$('agentInstruction').textContent=instruction;
+$('copyInstruction').onclick=async()=>{try{await navigator.clipboard.writeText(instruction);$('copyInstruction').textContent='已复制';}catch{$('agentInstruction').textContent=instruction+'（请选中文本复制）';}};
+async function request(path,options={}){const response=await fetch(path,options);const text=await response.text();let data;try{data=JSON.parse(text);}catch{throw Error(`HTTP ${response.status}: ${text}`);}if(!response.ok)throw Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);return data;}
+function fill(){const value=choices[Number($('instances').value)];if(!value)return;$('body').value=JSON.stringify({...value,operation:$('operation').value,caller:'browser-debug'},null,2);}
+$('instances').onchange=fill;$('operation').onchange=()=>{try{const body=JSON.parse($('body').value);body.operation=$('operation').value;$('body').value=JSON.stringify(body,null,2);}catch{fill();}};
+$('status').onclick=async()=>{try{const status=await request('/v1/status');$('statusOutput').textContent=JSON.stringify(status,null,2);choices=[];$('instances').replaceChildren();for(const config of status.configurations){if(!status.allowedConfigurations.includes(config.configuration))continue;for(const instance of (config.instances.length?config.instances:[{executionId:0,executors:["未运行；启动默认 Debug"]}])){const index=choices.length;choices.push({project:config.project,configuration:config.configuration,executionId:instance.executionId});const option=document.createElement('option');option.value=String(index);option.textContent=`${config.configuration} | ${config.project} | ${instance.executors.join('/')} | ID ${instance.executionId}`;$('instances').append(option);}}if(choices.length)fill();else{$('instances').append(new Option('没有白名单内的运行实例',''));}}catch(error){$('statusOutput').textContent=String(error);}};
+$('submit').onclick=async()=>{$('submit').disabled=true;try{const body=JSON.parse($('body').value);const result=await request('/v1/tasks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});$('taskId').value=result.id;$('taskOutput').textContent=JSON.stringify(result,null,2);}catch(error){$('taskOutput').textContent=String(error);}finally{$('submit').disabled=false;}};
+$('queryTask').onclick=async()=>{try{const id=$('taskId').value.trim();if(!/^[a-f0-9-]{36}$/.test(id))throw Error('请输入有效的任务 ID');$('taskOutput').textContent=JSON.stringify(await request('/v1/tasks/'+encodeURIComponent(id)),null,2);}catch(error){$('taskOutput').textContent=String(error);}};
+</script></body></html>

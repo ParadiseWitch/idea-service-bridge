@@ -1,0 +1,4 @@
+interface:
+  display_name: "IDEA 服务控制"
+  short_description: "通过 HTTP 或 MCP 控制本机 IDEA 服务，支持精确启动、资源更新、热替换和重启"
+  default_prompt: "使用 $idea-service-bridge 查询 IDEA 运行配置，按当前任务需要启动、更新或重启目标服务，并验证结果。"
