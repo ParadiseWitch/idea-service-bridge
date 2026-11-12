@@ -140,7 +140,8 @@ public final class IdeBackend implements BridgeBackend {
             if(runner!=null && manager.isStarting(mode,runner.getRunnerId()))
                 throw new IllegalStateException("An IDEA Run/Debug launch with this runner is already in progress; retry later");
         }
-        environment.assignNewExecutionId(); environment.setHeadless();
+        // Keep normal run content so Services/Debug can expose the process console.
+        environment.assignNewExecutionId();
         var operationLifetime=Disposer.newDisposable(lifetime,"Agent Bridge start");
         future.whenComplete((v,e)->Disposer.dispose(operationLifetime));
         watchLaunch(configured.project,environment,future,operationLifetime);
@@ -215,7 +216,7 @@ public final class IdeBackend implements BridgeBackend {
         target.settings.getConfiguration().checkConfiguration();
         rejectChainedLaunch(target.settings);
         var environment=new ExecutionEnvironmentBuilder(target.environment).contentToReuse(target.descriptor).build();
-        environment.assignNewExecutionId(); environment.setHeadless();
+        environment.assignNewExecutionId();
         var operationLifetime=Disposer.newDisposable(lifetime,"Agent Bridge restart");
         future.whenComplete((v,e)->Disposer.dispose(operationLifetime));
         watchLaunch(target.project,environment,future,operationLifetime);

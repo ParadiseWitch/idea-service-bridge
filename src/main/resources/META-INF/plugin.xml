@@ -2,7 +2,7 @@
   <id>dev.agentbridge.idea</id>
   <name>Agent Service Bridge</name>
   <vendor url="https://github.com/ParadiseWitch/idea-service-bridge">ParadiseWitch</vendor>
-  <version>0.3.0</version>
+  <version>0.3.1</version>
   <description><![CDATA[通过本机 HTTP 接口查询、更新和重启指定的 IDEA 运行配置。无需 Token，提供浏览器调试页和 agent 使用说明接口，支持动态安装与卸载。]]></description>
   <idea-version since-build="242" until-build="242.*"/>
   <depends>com.intellij.modules.platform</depends>

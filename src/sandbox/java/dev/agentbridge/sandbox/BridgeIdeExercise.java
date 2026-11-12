@@ -55,6 +55,8 @@ final class BridgeIdeExercise {
             check(task(client,base,project.getBasePath(),"portal",0,"start").get("status").getAsString().equals("SUCCEEDED"),"Start portal via HTTP");
             check(task(client,base,project.getBasePath(),"file-agent",0,"start").get("status").getAsString().equals("SUCCEEDED"),"Start file-agent via HTTP");
             long oldPid=waitPid(a,-1),otherPid=waitPid(b,-1);
+            checkConsole(project,"portal");
+            checkConsole(project,"file-agent");
             check(task(client,base,project.getBasePath(),"portal",0,"start").get("status").getAsString().equals("FAILED"),"Duplicate start rejected");
             check(ProcessHandle.of(oldPid).orElseThrow().isAlive(),"Duplicate start preserves target");
             report.add("Real HTTP start: portal and file-agent launched in Debug; duplicate start rejected");
@@ -79,6 +81,8 @@ final class BridgeIdeExercise {
             var restarted=task(client,base,project.getBasePath(),executionId,"restart");
             check(restarted.get("status").getAsString().equals("SUCCEEDED"),"Real restart succeeded: "+restarted);
             long newPid=waitPid(a,oldPid);
+            checkConsole(project,"portal");
+            report.add("Start and restart retain non-headless run environments and non-hidden console descriptors; desktop UI attachment requires a full IDE");
             check(!ProcessHandle.of(oldPid).map(ProcessHandle::isAlive).orElse(false),"Old target process exited");
             check(ProcessHandle.of(otherPid).orElseThrow().isAlive(),"Other process is still alive");
             check(Files.readString(b).trim().equals(Long.toString(otherPid)),"Other process was not restarted");
@@ -102,6 +106,14 @@ final class BridgeIdeExercise {
             edt(()->(java.util.concurrent.CompletableFuture<?>)hotSwap.invoke(null,project,handler)).get(30,java.util.concurrent.TimeUnit.SECONDS);
             report.add("Real targeted HotSwap: portal v1 -> v2, PID unchanged; file-agent stays v1 with unchanged PID; no-change callback completed");
         } catch(Throwable failure) {
+            report.add(edt(()-> {
+                var details=new ArrayList<String>();
+                for(var d:ExecutionManagerImpl.getInstance(project).getRunningDescriptors(s->true)) {
+                    var console=d.getExecutionConsole();
+                    details.add(d.getDisplayName()+": "+(console instanceof com.intellij.execution.impl.ConsoleViewImpl view ? view.getText() : String.valueOf(console)));
+                }
+                return "Test console diagnostics: "+details;
+            }));
             report.add("Process exercise failure: "+failure); throw failure;
         } finally {
             List<ProcessHandler> children=edt(()->Arrays.asList(ExecutionManagerImpl.getInstance(project).getRunningProcesses()));
@@ -134,6 +146,19 @@ final class BridgeIdeExercise {
         settings.setActivateToolWindowBeforeRun(false); settings.setFocusToolWindowBeforeRun(false);
         manager.addConfiguration(settings);
 
+    }
+    private static void checkConsole(Project project,String configuration) throws Exception {
+        edt(()-> {
+            var descriptor=ExecutionManagerImpl.getInstance(project)
+                .getRunningDescriptors(s->s.getName().equals(configuration)).getFirst();
+            var environment=ExecutionManagerImpl.getInstance(project).getExecutionEnvironments(descriptor).iterator().next();
+            check(!environment.isHeadless(),configuration+" must use normal IDEA run content, not headless launch");
+            check(descriptor.getExecutionConsole()!=null,configuration+" has a console");
+            check(!descriptor.isHiddenContent(),configuration+" run content must not be hidden");
+            // RunContentManagerImpl.showRunContent returns immediately in SDK unit-test mode.
+            // Actual tool-window attachment must be verified in the user's full IDEA.
+            return null;
+        });
     }
     private static String probe(HttpClient client,Path pidFile) throws Exception {
         Path port=Path.of(pidFile+".port");

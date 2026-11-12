@@ -21,7 +21,7 @@
 
 ## 安装并打开帮助页
 
-1. 从 [Releases](https://github.com/ParadiseWitch/idea-service-bridge/releases) 下载 `idea-agent-bridge-0.3.0.zip`。
+1. 从 [Releases](https://github.com/ParadiseWitch/idea-service-bridge/releases) 下载 `idea-agent-bridge-0.3.1.zip`。
 2. IDEA 打开 **Settings → Plugins → 齿轮 → Install Plugin from Disk**，选择 ZIP。
 3. 点击 **Tools → Agent Service Bridge → 启动 / 查看连接信息**。
 4. 浏览器打开 **http://127.0.0.1:17891/help**。弹窗会列出实际接口地址。
@@ -29,10 +29,12 @@
 也可通过 GitHub CLI 下载：
 
 ```powershell
-gh release download v0.3.0 --repo ParadiseWitch/idea-service-bridge --pattern 'idea-agent-bridge-0.3.0.zip'
+gh release download v0.3.1 --repo ParadiseWitch/idea-service-bridge --pattern 'idea-agent-bridge-0.3.1.zip'
 ```
 
 开启 Agent 接口只开启控制接口，不会自动启动或停止业务服务。
+
+0.3.1 修复了 0.3.0 通过插件启动/重启后控制台不显示的问题，恢复 IDEA 正常的 Services / Run / Debug 显示流程。该修复不会自动补挂已有实例的控制台，详见 [更新记录](CHANGELOG.md)。
 
 插件已在隔离环境验证动态安装、卸载和更新，但 **不能保证所有 IDEA 状态都无需重启**。例如其他插件已有待重启更新时，IDEA 2024.2 的全局标记会阻止动态安装。遇到 Restart IDE 提示，先保留现有服务，在合适维护窗口处理；不要反复安装或清空其他插件的更新队列。
 
@@ -151,7 +153,7 @@ npm test
 npm run smoke                      # 只读访问正在运行的插件
 ```
 
-安装包位于 `build/idea-agent-bridge-0.3.0.zip`。沙箱配置、缓存和日志位于 `.sandbox/`；测试使用临时端口及独立 JVM，不拿业务服务做可随意停止的测试夹具。
+安装包位于 `build/idea-agent-bridge-0.3.1.zip`。沙箱配置、缓存和日志位于 `.sandbox/`；测试使用临时端口及独立 JVM，不拿业务服务做可随意停止的测试夹具。
 
 ## 测试与兼容范围
 

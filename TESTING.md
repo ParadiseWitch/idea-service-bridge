@@ -11,6 +11,7 @@ Windows、IntelliJ IDEA Ultimate 2024.2.6 (`IU-242.26775.15`)、JetBrains Runtim
 - HTTP 免 Token、浏览器同源 POST、跨源拒绝、参数与白名单校验、帮助页和 Markdown 使用说明。
 - 异步任务互斥、错误传播、无自动重试/重启、路径归一化、关闭端口和查询等待线程。
 - HTTP 启动两个真实 Debug JVM；重复启动拒绝，原进程保留。
+- 启动和重启后检查执行环境未设置 headless、存在控制台且内容未隐藏。SDK 单元测试模式的 RunContentManager 跳过工具窗口挂接，实际 Services / Debug 窗口显示需完整桌面验证。
 - 通过 HTTP 重启一个测试配置，另一个测试配置的 PID 不变，Debug 模式保留。
 - 旧 executionId 和不支持的更新请求失败，两个进程继续运行。
 - 修改方法体并编译，对目标 Debug JVM HotSwap：目标返回 v2、PID 不变；另一个仍返回 v1、PID 不变。重复无变更加载的回调也完成。
