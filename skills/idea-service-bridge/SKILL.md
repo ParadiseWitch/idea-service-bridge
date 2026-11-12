@@ -10,11 +10,13 @@ description: 通过本机 IDEA Agent Service Bridge 的 HTTP 或 MCP 接口查�
 ## 接入与定位
 
 1. 当前客户端已暴露 `idea_*` MCP 工具时优先使用；工具可能带服务命名前缀。否则直接访问 HTTP，或使用本技能的 `scripts/idea-bridge.ps1`。磁盘上存在 MCP 适配器不代表客户端已经连接。
-2. 先只读查询 `/v1/status`；需要实时使用说明时读取 `/v1/skill`。记录后端 `version`、项目绝对路径、准确的配置名称、`allowedConfigurations`、实例 `executionId` 和执行模式。不要从旧对话复用实例 ID。
+2. 先只读查询 `/v1/status`；需要实时使用说明时读取 `/v1/skill`。记录后端 `version`、项目绝对路径、准确的配置名称、实例 `executionId` 和执行模式。不要从旧对话复用实例 ID。
 3. 用项目和配置名唯一定位目标。用户口中的 `fileagent` / `file_agent` 在某些项目实际叫 `file-agent`，以查询结果为准。不能按 IDEA 当前选中的运行窗口推断目标。
 4. 接口不通时，检查用户给出的实际地址或当前 IDEA 的连接信息；提示在 **Tools → Agent Service Bridge → 启动 / 查看连接信息** 开启接口。启动 Agent 接口不会启动业务服务。
 
 HTTP 与 MCP 的参数、操作映射及请求示例见 [references/api.md](references/api.md)。
+
+0.4.0 起默认允许全部运行配置，不再读取 `allowedConfigurations`；旧版本存在白名单时以其状态为准。配置名称始终从当前状态中获取，不能写死示例名称。
 
 ## 选择操作
 

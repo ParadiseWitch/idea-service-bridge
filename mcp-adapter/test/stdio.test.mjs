@@ -10,7 +10,7 @@ test('real stdio child discovers and calls tools from an unrelated working direc
   let calls = 0;
   const backend = http.createServer((req,res) => {
     calls++; res.setHeader('content-type','application/json');
-    res.end(JSON.stringify({ version:'0.3.0', busy:false, configurations:[], allowedConfigurations:['portal'] }));
+    res.end(JSON.stringify({ version:'0.3.0', busy:false, configurations:[] }));
   });
   backend.listen(0,'127.0.0.1'); await once(backend,'listening');
   t.after(async () => { backend.closeAllConnections(); await new Promise(resolve => backend.close(resolve)); });

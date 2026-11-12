@@ -18,7 +18,7 @@ public final class BrowserSmokeServer {
             }
             public void close() { }
         };
-        try(var server=new BridgeServer(fake,Set.of("portal","file-agent"))) {
+        try(var server=new BridgeServer(fake)) {
             int port=server.start(0);
             String base="http://127.0.0.1:"+port;
             Files.writeString(Path.of("build/reports/browser-connection.json"),new Gson().toJson(Map.of("baseUrl",base)));

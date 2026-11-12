@@ -59,7 +59,7 @@ $bridge = "$env:USERPROFILE/.agents/skills/idea-service-bridge/scripts/idea-brid
 | 返回/现象 | 处理 |
 |---|---|
 | 400 | 检查必填参数、operation 和 executionId；0.2.0 不支持 start |
-| 403 | 检查配置是否在白名单、请求 Host 是否为实际 127.0.0.1 地址；浏览器跨源请求不支持 |
+| 403 | 检查请求 Host 是否为实际 127.0.0.1 地址；浏览器跨源请求不支持。0.4.0 已移除配置白名单 |
 | 409 | 同项目已有修改任务，等待后重新查状态 |
 | 503 | 接口暂停等待插件更新，任务空闲后从 Tools 启动接口恢复 |
 | FAILED | 读取错误信息；更新失败不自动改为 restart |

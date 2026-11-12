@@ -6,12 +6,12 @@ import java.util.*;
 
 /** Shared interface documentation for the browser, IDE dialog and agents. */
 public final class BridgeHelp {
-    public static final String VERSION="0.3.1";
+    public static final String VERSION="0.4.0";
     private BridgeHelp() { }
-    public static Map<String,Object> api(String base,Set<String> allowed) {
+    public static Map<String,Object> api(String base) {
         return Map.of("name","Agent Service Bridge","version",VERSION,"baseUrl",base,
             "authenticationRequired",false,"skillEndpoint","/v1/skill","browserHelp",base+"/help",
-            "allowedConfigurations",new TreeSet<>(allowed),"endpoints",List.of(
+            "endpoints",List.of(
                 Map.of("method","GET","path","/v1/status","description","查询项目、运行配置和 executionId"),
                 Map.of("method","POST","path","/v1/tasks","description","提交启动、更新或显式重启任务"),
                 Map.of("method","GET","path","/v1/tasks/{id}","description","查询异步任务结果"),
@@ -20,7 +20,7 @@ public final class BridgeHelp {
             "taskExample",Map.of("project","C:/projects/my-app","configuration","portal","executionId",123,
                 "operation","update-resources","caller","agent-session-name"));
     }
-    public static String skill(String base,Set<String> allowed) {
+    public static String skill(String base) {
         return """
             ---
             name: idea-agent-service-bridge
@@ -29,7 +29,7 @@ public final class BridgeHelp {
             # IDEA Agent Service Bridge
 
             服务地址：%s。无需 Token 或 Authorization 请求头。支持启动未运行配置，以及操作已运行实例。
-            当前允许的配置：%s。项目路径必须是绝对路径。
+            默认允许所有运行配置。项目路径必须是绝对路径。
 
             ## 调用流程
 
@@ -59,7 +59,7 @@ public final class BridgeHelp {
             ## 并发与失败处理
 
             - 同一项目只允许一个修改任务。HTTP 409 时等待当前任务完成，再查状态后重试。
-            - HTTP 403 是配置不在白名单；400 是请求无效；503 是接口暂停等待插件更新。
+            - HTTP 403 是请求 Host 或浏览器 Origin 无效；400 是请求无效；503 是接口暂停等待插件更新。
             - FAILED 时读取 error。编译或 HotSwap 失败不自动重启，也不要将客户端超时视为取消。
             - 索引中、正在编译、存在未保存编辑内容、实例 ID 过期或实例不唯一时会拒绝操作。
             - 多个 agent 共享工作目录时，编译可能包含其他 agent 已写入磁盘的改动，先协调再更新。
@@ -74,7 +74,7 @@ public final class BridgeHelp {
             ```
 
             浏览器帮助与调试：%s/help。GET 接口不触发更新或重启，修改操作仅通过 POST /v1/tasks 提交。
-            """.formatted(base,String.join(", ",new TreeSet<>(allowed)),base,base,base,base,base,base);
+            """.formatted(base,base,base,base,base,base,base);
     }
     public static String browserPage() throws IOException {
         try(var stream=BridgeHelp.class.getResourceAsStream("/web/help.html")) {
@@ -92,6 +92,6 @@ public final class BridgeHelp {
             "Agent Skill：GET "+base+"/v1/skill\n\n"+
             "可直接告诉 agent：先读取 "+base+"/v1/skill，按说明操作 IDEA。\n\n"+
             "连接信息："+connectionFile+"\n"+
-            "白名单配置见同目录 settings.json。启动接口不会操作运行服务。";
+            "默认允许所有运行配置。启动接口不会操作运行服务。";
     }
 }

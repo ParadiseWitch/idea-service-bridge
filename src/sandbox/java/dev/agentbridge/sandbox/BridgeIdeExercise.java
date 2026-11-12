@@ -47,26 +47,26 @@ final class BridgeIdeExercise {
             Files.deleteIfExists(a); Files.deleteIfExists(b);
             Files.deleteIfExists(Path.of(a+".port")); Files.deleteIfExists(Path.of(b+".port"));
             edt(()-> {
-                createAndRun(project,module.getFixture().getModule(),"portal",a);
-                createAndRun(project,module.getFixture().getModule(),"file-agent",b);
+                createAndRun(project,module.getFixture().getModule(),"demo-api",a);
+                createAndRun(project,module.getFixture().getModule(),"background-worker",b);
                 return null;
             });
             var client=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
-            check(task(client,base,project.getBasePath(),"portal",0,"start").get("status").getAsString().equals("SUCCEEDED"),"Start portal via HTTP");
-            check(task(client,base,project.getBasePath(),"file-agent",0,"start").get("status").getAsString().equals("SUCCEEDED"),"Start file-agent via HTTP");
+            check(task(client,base,project.getBasePath(),"demo-api",0,"start").get("status").getAsString().equals("SUCCEEDED"),"Start portal via HTTP");
+            check(task(client,base,project.getBasePath(),"background-worker",0,"start").get("status").getAsString().equals("SUCCEEDED"),"Start file-agent via HTTP");
             long oldPid=waitPid(a,-1),otherPid=waitPid(b,-1);
-            checkConsole(project,"portal");
-            checkConsole(project,"file-agent");
-            check(task(client,base,project.getBasePath(),"portal",0,"start").get("status").getAsString().equals("FAILED"),"Duplicate start rejected");
+            checkConsole(project,"demo-api");
+            checkConsole(project,"background-worker");
+            check(task(client,base,project.getBasePath(),"demo-api",0,"start").get("status").getAsString().equals("FAILED"),"Duplicate start rejected");
             check(ProcessHandle.of(oldPid).orElseThrow().isAlive(),"Duplicate start preserves target");
-            report.add("Real HTTP start: portal and file-agent launched in Debug; duplicate start rejected");
+            report.add("Real HTTP start: demo-api and background-worker launched in Debug; duplicate start rejected");
             long executionId=-1;
             JsonObject status=null;
             for(int attempt=0;attempt<100 && executionId<0;attempt++) {
                 status=get(client,base+"/v1/status");
                 for(var entry:status.getAsJsonArray("configurations")) {
                     var configuration=entry.getAsJsonObject();
-                    if(configuration.get("configuration").getAsString().equals("portal") && !configuration.getAsJsonArray("instances").isEmpty())
+                    if(configuration.get("configuration").getAsString().equals("demo-api") && !configuration.getAsJsonArray("instances").isEmpty())
                         executionId=configuration.getAsJsonArray("instances").get(0).getAsJsonObject().get("executionId").getAsLong();
                 }
                 if(executionId<0) Thread.sleep(100);
@@ -81,12 +81,12 @@ final class BridgeIdeExercise {
             var restarted=task(client,base,project.getBasePath(),executionId,"restart");
             check(restarted.get("status").getAsString().equals("SUCCEEDED"),"Real restart succeeded: "+restarted);
             long newPid=waitPid(a,oldPid);
-            checkConsole(project,"portal");
+            checkConsole(project,"demo-api");
             report.add("Start and restart retain non-headless run environments and non-hidden console descriptors; desktop UI attachment requires a full IDE");
             check(!ProcessHandle.of(oldPid).map(ProcessHandle::isAlive).orElse(false),"Old target process exited");
             check(ProcessHandle.of(otherPid).orElseThrow().isAlive(),"Other process is still alive");
             check(Files.readString(b).trim().equals(Long.toString(otherPid)),"Other process was not restarted");
-            report.add("Real runner restart: portal PID "+oldPid+" -> "+newPid+"; file-agent PID "+otherPid+" unchanged");
+            report.add("Real runner restart: demo-api PID "+oldPid+" -> "+newPid+"; background-worker PID "+otherPid+" unchanged");
             report.add("Real IDE guards: stale execution ID and non-server update rejected without stopping either process");
             check(probe(client,a).equals("v1:"+newPid),"Target starts with v1");
             check(probe(client,b).equals("v1:"+otherPid),"Other debugger starts with v1");
@@ -96,7 +96,7 @@ final class BridgeIdeExercise {
                 "-d",root.resolve(".sandbox/probe-classes").toString(),source.toString()).redirectErrorStream(true).start();
             String compileOutput=new String(compiler.getInputStream().readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);
             check(compiler.waitFor()==0,"Updated test fixture compiled: "+compileOutput);
-            var handler=edt(()->ExecutionManagerImpl.getInstance(project).getRunningDescriptors(s->s.getName().equals("portal")).getFirst().getProcessHandler());
+            var handler=edt(()->ExecutionManagerImpl.getInstance(project).getRunningDescriptors(s->s.getName().equals("demo-api")).getFirst().getProcessHandler());
             var hotSwap=pluginLoader.loadClass("dev.agentbridge.idea.TargetHotSwap").getMethod("reload",Project.class,ProcessHandler.class);
             var completion=edt(()->(java.util.concurrent.CompletableFuture<?>)hotSwap.invoke(null,project,handler));
             completion.get(30,java.util.concurrent.TimeUnit.SECONDS);
@@ -104,7 +104,7 @@ final class BridgeIdeExercise {
             check(probe(client,b).equals("v1:"+otherPid),"Other debugger class unchanged");
             // No-change reload must also invoke its completion callback.
             edt(()->(java.util.concurrent.CompletableFuture<?>)hotSwap.invoke(null,project,handler)).get(30,java.util.concurrent.TimeUnit.SECONDS);
-            report.add("Real targeted HotSwap: portal v1 -> v2, PID unchanged; file-agent stays v1 with unchanged PID; no-change callback completed");
+            report.add("Real targeted HotSwap: demo-api v1 -> v2, PID unchanged; background-worker stays v1 with unchanged PID; no-change callback completed");
         } catch(Throwable failure) {
             report.add(edt(()-> {
                 var details=new ArrayList<String>();
@@ -167,7 +167,7 @@ final class BridgeIdeExercise {
             .timeout(Duration.ofSeconds(5)).build(),HttpResponse.BodyHandlers.ofString()).body();
     }
     private static JsonObject task(HttpClient client,String base,String project,long id,String op) throws Exception {
-        return task(client,base,project,"portal",id,op);
+        return task(client,base,project,"demo-api",id,op);
     }
     private static JsonObject task(HttpClient client,String base,String project,String configuration,long id,String op) throws Exception {
         var body=new Gson().toJson(Map.of("project",project,"configuration",configuration,"executionId",id,"operation",op,"caller","isolated-sdk-test","executor","Debug"));

@@ -13,7 +13,6 @@ import java.util.concurrent.*;
 public final class BridgeServer implements AutoCloseable {
     private static final int MAX_BODY = 16384, MAX_HISTORY = 200;
     private final BridgeBackend backend;
-    private final Set<String> allowed;
     private final Gson json = new GsonBuilder().disableHtmlEscaping().create();
     private final LinkedHashMap<String,Task> tasks = new LinkedHashMap<>();
     private final Set<String> lockedProjects = new HashSet<>();
@@ -26,9 +25,8 @@ public final class BridgeServer implements AutoCloseable {
     private boolean closed;
     private boolean accepting=true;
 
-    public BridgeServer(BridgeBackend backend,Set<String> allowed) {
+    public BridgeServer(BridgeBackend backend) {
         this.backend=backend;
-        this.allowed=Set.copyOf(allowed);
     }
     public synchronized int start(int port) throws IOException {
         if(closed || server!=null) throw new IllegalStateException("Server already started or closed");
@@ -57,11 +55,11 @@ public final class BridgeServer implements AutoCloseable {
                 if((path.equals("/") || path.equals("/help")) && method.equals("GET")) {
                     sendText(exchange,"text/html",BridgeHelp.browserPage());
                 } else if(path.equals("/v1/help") && method.equals("GET")) {
-                    send(exchange,200,BridgeHelp.api(baseUrl(),allowed));
+                    send(exchange,200,BridgeHelp.api(baseUrl()));
                 } else if((path.equals("/v1/skill") || path.equals("/skill.md")) && method.equals("GET")) {
-                    sendText(exchange,"text/markdown",BridgeHelp.skill(baseUrl(),allowed));
+                    sendText(exchange,"text/markdown",BridgeHelp.skill(baseUrl()));
                 } else if(path.equals("/v1/status") && method.equals("GET")) {
-                    send(exchange,200,Map.of("version",BridgeHelp.VERSION,"busy",isBusy(),"allowedConfigurations",allowed,
+                    send(exchange,200,Map.of("version",BridgeHelp.VERSION,"busy",isBusy(),
                         "configurations",backend.configurations()));
                 } else if(path.equals("/v1/tasks") && method.equals("POST")) {
                     String type=exchange.getRequestHeaders().getFirst("Content-Type");
@@ -75,7 +73,6 @@ public final class BridgeServer implements AutoCloseable {
                         if(request==null) throw new IllegalArgumentException("Request required");
                         request.validate();
                     } catch(JsonParseException | IllegalArgumentException e) { throw new ApiError(400,e.getMessage()); }
-                    if(!allowed.contains(request.configuration())) throw new ApiError(403,"Configuration is not allowlisted");
                     Task task=submit(request);
                     send(exchange,202,task.snapshot());
                 } else if(path.startsWith("/v1/tasks/") && method.equals("GET")) {

@@ -16,7 +16,7 @@ public class BridgeServerTest {
     private final FakeBackend backend = new FakeBackend();
     private String base;
     @Before public void start() throws Exception {
-        server = new BridgeServer(backend, Set.of("portal", "file-agent"));
+        server = new BridgeServer(backend);
         base = "http://127.0.0.1:" + server.start(0);
     }
     @After public void stop() { server.close(); }
@@ -68,9 +68,14 @@ public class BridgeServerTest {
     @Test public void validationCannotReachBackend() throws Exception {
         assertEquals(400,request("POST","/v1/tasks","{").statusCode());
         assertEquals(400,request("POST","/v1/tasks","{}").statusCode());
-        assertEquals(403,request("POST","/v1/tasks",body("p","other","restart")).statusCode());
         assertEquals(400,request("POST","/v1/tasks",body("p","portal","stop-all")).statusCode());
         assertEquals(0,backend.calls.get());
+    }
+    @Test public void arbitraryConfigurationNamesNeedNoAllowlist() throws Exception {
+        assertFalse(job(request("GET","/v1/status",null)).has("allowedConfigurations"));
+        assertFalse(job(request("GET","/v1/help",null)).has("allowedConfigurations"));
+        assertEquals(202,request("POST","/v1/tasks",body("p","my-custom-app","restart")).statusCode());
+        backend.complete("p",Map.of("processStarted",true));
     }
     @Test public void startAcceptsNoInstanceIdButRejectsInvalidExecutor() throws Exception {
         String start="{\"project\":\"p\",\"configuration\":\"portal\",\"operation\":\"start\",\"caller\":\"test\",\"executor\":\"Debug\"}";

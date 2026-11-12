@@ -15,7 +15,7 @@ async function fixture(t, options = {}) {
     if (options.fail) { res.writeHead(409, { 'content-type': 'application/json' }); res.end('{"error":"Project has an active task"}'); return; }
     if (req.url === '/v1/skill') { res.writeHead(200, { 'content-type': 'text/markdown' }); res.end('# IDEA 使用说明\n先查询 executionId'); return; }
     res.setHeader('content-type', 'application/json');
-    if (req.url === '/v1/status') res.end(JSON.stringify({ version: options.version ?? '0.3.0', busy: false, allowedConfigurations: ['portal','file-agent'], configurations: [{ project:'C:/code/dev', configuration:'portal', instances:[] }] }));
+    if (req.url === '/v1/status') res.end(JSON.stringify({ version: options.version ?? '0.3.0', busy: false, configurations: [{ project:'C:/code/dev', configuration:'portal', instances:[] }] }));
     else if (req.url === '/v1/tasks' && req.method === 'POST') res.end(JSON.stringify({ id:'11223344-5566-7788-99aa-bbccddeeff00', status:'RUNNING' }));
     else if (req.url.startsWith('/v1/tasks/')) res.end(JSON.stringify({ id:'11223344-5566-7788-99aa-bbccddeeff00', status: options.taskStatus ?? 'SUCCEEDED', ...(options.taskStatus === 'FAILED' ? { error:'Compilation failed' } : { result:{ processStarted:true, applicationHealthVerified:false } }) }));
     else { res.statusCode = 404; res.end('{"error":"not found"}'); }

@@ -6,14 +6,15 @@
 
 - 插件工程为本仓库实际克隆目录，下文用 `C:/tools/idea-service-bridge` 举例。
 - 目标项目路径、配置名称、运行实例和业务端口均从 `/v1/status` 获取，不从示例推断。
-- 默认白名单配置为 `portal` 和 `file-agent`，可在 settings.json 中换成自己的配置名。
+- 0.4.0 起默认允许所有运行配置，服务名从状态查询获取；`portal` 和 `file-agent` 仅为示例。
 - 默认插件 API 为 `http://127.0.0.1:17891`，与业务端口独立。
 - Windows IDEA 2024.2 连接信息一般为 `$env:APPDATA/JetBrains/IntelliJIdea2024.2/agent-service-bridge/connection.json`，其中保存实际 baseUrl。
-- settings.json 在同目录，包含 port 和 allowedConfigurations。仅在用户要求配置接口时修改；停止 Agent 接口不等于停止业务服务。
+- settings.json 在同目录，仅包含 port（0.4.0+）。仅在用户要求配置接口时修改；停止 Agent 接口不等于停止业务服务。
 
 ## 版本边界
 
 - 插件 0.2.0 支持免 Token、HTTP 帮助和已有实例更新/重启。
+- 插件 0.4.0 移除白名单；启动接口时自动移除旧 settings.json 中的 allowedConfigurations 字段并保留端口。
 - 插件 0.3.0 新增启动未运行配置；默认 Debug，已有实例时拒绝重复启动。
 - 插件 0.3.1 移除启动/重启时错误的 headless 标记，恢复正常控制台显示流程。不会自动补挂 0.3.0 已启动实例的控制台，不能为恢复日志未经授权重启服务。
 - 当前已生成的插件声明 IDEA `242.*`，实际验证 Ultimate 2024.2.6。不能把 2024.3、2025.1、2025.2 或更早版本说成已经支持。

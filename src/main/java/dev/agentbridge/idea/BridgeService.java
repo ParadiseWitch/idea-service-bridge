@@ -42,12 +42,11 @@ public final class BridgeService implements Disposable {
         } else {
             settings=new Settings();
         }
-        if(settings==null || settings.port<1024 || settings.port>65535 ||
-           settings.allowedConfigurations==null || settings.allowedConfigurations.isEmpty())
-            throw new IOException("Invalid settings.json: require port 1024..65535 and a nonempty allowlist");
-        // Rewrite the known settings to migrate legacy versions and remove their unused token field.
+        if(settings==null || settings.port<1024 || settings.port>65535)
+            throw new IOException("Invalid settings.json: require port 1024..65535");
+        // Rewrite the known settings to migrate legacy versions and remove obsolete token and allowedConfigurations fields.
         writePrivate(settingsFile,JSON.toJson(settings));
-        var candidate=new BridgeServer(new IdeBackend(),Set.copyOf(settings.allowedConfigurations));
+        var candidate=new BridgeServer(new IdeBackend());
         try {
             int port=candidate.start(settings.port);
             writePrivate(directory.resolve("connection.json"),JSON.toJson(Map.of("baseUrl","http://127.0.0.1:"+port,
@@ -90,6 +89,5 @@ public final class BridgeService implements Disposable {
     }
     private static final class Settings {
         int port=17891;
-        List<String> allowedConfigurations=new ArrayList<>(List.of("portal","file-agent"));
     }
 }

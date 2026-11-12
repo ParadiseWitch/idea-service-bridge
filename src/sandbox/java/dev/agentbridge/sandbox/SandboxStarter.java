@@ -83,6 +83,9 @@ public final class SandboxStarter implements ApplicationStarter {
         String base=json.get("baseUrl").getAsString();
         check(!json.has("token"),"Connection file contains no token");
         check(!JsonParser.parseString(Files.readString(connection.resolveSibling("settings.json"))).getAsJsonObject().has("token"),"Legacy token removed from settings");
+        var settings=JsonParser.parseString(Files.readString(connection.resolveSibling("settings.json"))).getAsJsonObject();
+        check(!settings.has("allowedConfigurations"),"Legacy configuration allowlist removed");
+        check(settings.get("port").getAsInt()==URI.create(base).getPort(),"Migration preserves configured port");
         String dialog=edt(()->(String)serviceClass.getMethod("connectionDescription").invoke(service));
         check(dialog.contains(base+"/v1/status") && dialog.contains(base+"/v1/skill") && dialog.contains(base+"/help"),"Dialog includes actual interface addresses");
         var client=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();

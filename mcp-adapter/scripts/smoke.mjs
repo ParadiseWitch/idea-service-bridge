@@ -19,7 +19,7 @@ try {
   await client.readResource({uri:resources[0].uri});
   const report={ testedAt:new Date().toISOString(),baseUrl,backendVersion:status.structuredContent.version,
     tools:tools.map(tool=>tool.name),resources:resources.map(resource=>resource.uri),
-    configurations:status.structuredContent.configurations.filter(c=>status.structuredContent.allowedConfigurations.includes(c.configuration)),
+    configurations:status.structuredContent.configurations,
     readonly:true,diagnostics };
   await mkdir(fileURLToPath(new URL('../../build/reports/',import.meta.url)),{recursive:true});
   await writeFile(fileURLToPath(new URL('../../build/reports/mcp-smoke.json',import.meta.url)),JSON.stringify(report,null,2));

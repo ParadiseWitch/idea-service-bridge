@@ -1,5 +1,12 @@
 # 更新记录
 
+## v0.4.0
+
+- 移除运行配置白名单，默认允许所有配置；settings.json 仅保留端口，自动移除旧 allowedConfigurations 字段。
+- HTTP 状态/帮助、浏览器、MCP 和 Skill 同步移除白名单依赖。
+- 精简 README，补充 agent 配合旧版 IDEA 使用的场景。
+- 新增任意配置名和旧设置迁移验证。
+
 ## v0.3.1
 
 - 修复插件启动或重启配置时设置 headless 标记，导致进程运行但控制台不显示的问题。现在使用 IDEA 正常的 Services / Run / Debug 内容显示流程。

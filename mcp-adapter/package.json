@@ -1,6 +1,6 @@
 {
   "name": "idea-agent-bridge-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "description": "独立 MCP stdio 适配器，复用 IDEA Agent Service Bridge HTTP API",
