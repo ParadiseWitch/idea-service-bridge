@@ -15,6 +15,7 @@
 
 - 插件 0.2.0 支持免 Token、HTTP 帮助和已有实例更新/重启。
 - 插件 0.3.0 新增启动未运行配置；默认 Debug，已有实例时拒绝重复启动。
+- 插件 0.3.1 移除启动/重启时错误的 headless 标记，恢复正常控制台显示流程。不会自动补挂 0.3.0 已启动实例的控制台，不能为恢复日志未经授权重启服务。
 - 当前已生成的插件声明 IDEA `242.*`，实际验证 Ultimate 2024.2.6。不能把 2024.3、2025.1、2025.2 或更早版本说成已经支持。
 - 2024.1 及更早还涉及 Java 17 构建；当前构建为 Java 21。Community 不在当前支持范围内，插件依赖 Ultimate 应用服务器功能。
 - 扩展兼容应针对目标 SDK 验证后再修改声明，而不是只放宽 until-build。具体状态以工程 COMPATIBILITY.md 和实测报告为准。
@@ -66,3 +67,14 @@ Not allowing load/unload without restart because of pending restart operation
 IDEA 2024.2 日志通常在 `$env:LOCALAPPDATA/JetBrains/IntelliJIdea2024.2/log/idea.log`。其他版本通过 Help → Show Log 获取实际目录。
 
 原工程的 `build.ps1 -Task sandbox` 使用隔离 SDK 测试，不应拿业务 portal/file-agent 当成可随意停止的测试夹具。正式业务验证只针对用户授权的目标配置。
+
+## 读取输出日志与核验部署
+
+0.3.1 的 HTTP/MCP 只提供状态、任务和帮助，没有 console/logs 接口。IDEA 控制台显示修复与远程读取控制台是两项能力，不能混为一谈。可在有文件权限时只读查看服务的落盘日志；它可能不包含全部 stdout/stderr 或业务日志。
+
+1. 先查询当前项目、配置、executionId 和业务端口。通过监听端口对应 PID、进程启动时间与命令行 `-Dcatalina.base` 对应当前实例，不能只根据某个旧日志目录名推断。
+2. Windows IDEA 的 Tomcat 实例目录通常在 `$env:LOCALAPPDATA/JetBrains/IntelliJIdea2024.2/tomcat/<实例目录>`。具体以当前进程或运行配置为准；`conf/server.xml` 中 Connector 端口可辅助核对，但可能存在多个旧目录使用相同端口。
+3. 查看该实例 `logs/catalina.<日期>.log`、`localhost.<日期>.log` 的末尾，核对日志时间晚于本次启动。只读取得所需末尾行和异常上下文；分享时省略凭据、会话值和无关个人信息。
+4. 即使任务 SUCCEEDED、Tomcat connected=true、starting=false，仍需检查 `SEVERE`、筛选器启动失败、Context 启动失败等部署错误。localhost 日志通常包含更具体的异常。不要把根路径 404 或端口监听当作应用健康证明，也不要因读取到错误就自动修改业务代码或重启。
+
+没有落盘日志且无法控制桌面时，明确当前不能获取 IDEA 控制台全文；不要编造日志或声称日志已验证。

@@ -36,6 +36,8 @@ gh release download v0.3.1 --repo ParadiseWitch/idea-service-bridge --pattern 'i
 
 0.3.1 修复了 0.3.0 通过插件启动/重启后控制台不显示的问题，恢复 IDEA 正常的 Services / Run / Debug 显示流程。该修复不会自动补挂已有实例的控制台，详见 [更新记录](CHANGELOG.md)。
 
+当前没有 HTTP/MCP 控制台日志读取接口。Agent 可在有文件权限时读取当前 Tomcat 实例的落盘日志，方法见 [技能排查指引](skills/idea-service-bridge/references/setup-and-troubleshooting.md#读取输出日志与核验部署)。落盘日志不一定包含控制台全部输出。
+
 插件已在隔离环境验证动态安装、卸载和更新，但 **不能保证所有 IDEA 状态都无需重启**。例如其他插件已有待重启更新时，IDEA 2024.2 的全局标记会阻止动态安装。遇到 Restart IDE 提示，先保留现有服务，在合适维护窗口处理；不要反复安装或清空其他插件的更新队列。
 
 ![浏览器调试页示例，使用模拟后端](docs/images/help-example.png)
